@@ -34,12 +34,18 @@ export function makeUpgradeProxy(hre: HardhatRuntimeEnvironment): UpgradeFunctio
 
     const upgradeTo = await getUpgrader(proxyAddress, ImplFactory.signer);
     const nextImpl = await deployImpl(hre, ImplFactory, withValidationDefaults(opts), proxyAddress);
-    await upgradeTo(nextImpl);
+    const receipt = await upgradeTo(nextImpl);
+    console.log(receipt);
+    // @ts-ignore
+    if (receipt && typeof receipt.wait === 'function') {
+      // @ts-ignore
+      await receipt.wait();
+    }
 
     return ImplFactory.attach(proxyAddress);
   };
 
-  type Upgrader = (nextImpl: string) => Promise<void>;
+  type Upgrader = (nextImpl: string) => Promise<unknown>;
 
   async function getUpgrader(proxyAddress: string, signer: Signer): Promise<Upgrader> {
     const { provider } = hre.network;
